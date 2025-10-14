@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "Pluralsight Auto Copy",
+  "description": "Copia automáticamente al portapapeles las preguntas y respuestas de los tests de Pluralsight.",
+  "version": "1.3.2",
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "scripting"
+  ],
+  "optional_permissions": [
+    "clipboardWrite"
+  ],
+  "host_permissions": [
+    "https://*.pluralsight.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Pluralsight Auto Copy"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*.pluralsight.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  }
+  
+}
