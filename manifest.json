@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Pluralsight Auto Copy",
   "description": "Copia automáticamente al portapapeles las preguntas y respuestas de los tests de Pluralsight.",
-  "version": "1.3.2",
+  "version": "1.3.4",
   "permissions": [
     "activeTab",
     "tabs",
