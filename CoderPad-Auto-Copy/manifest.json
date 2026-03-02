@@ -1,0 +1,39 @@
+{
+  "manifest_version": 3,
+  "name": "CoderPad Auto Copy",
+  "description": "Copia automáticamente al portapapeles las preguntas y código de CoderPad.",
+  "version": "1.5.0",
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "scripting",
+    "storage"
+  ],
+  "optional_permissions": [
+    "clipboardWrite"
+  ],
+  "host_permissions": [
+    "https://screen-ide.coderpad.io/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "CoderPad Auto Copy"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://screen-ide.coderpad.io/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  }
+  
+}

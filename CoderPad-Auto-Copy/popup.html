@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            width: 300px;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            font-size: 18px;
+            margin: 0 0 5px 0;
+            color: #333;
+        }
+        
+        .header p {
+            font-size: 12px;
+            color: #666;
+            margin: 0;
+        }
+        
+        .copy-button {
+            width: 100%;
+            padding: 12px;
+            background: #007acc;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .copy-button:hover {
+            background: #005a9e;
+        }
+        
+        .copy-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 13px;
+            text-align: center;
+            display: none;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .auto-mode {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .auto-mode strong {
+            color: #333;
+        }
+        
+        .permission-status {
+            margin-top: 10px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            text-align: center;
+            border: 1px solid;
+        }
+        
+        .permission-status.granted {
+            background: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+        
+        .permission-status.denied {
+            background: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
+        
+        .permission-request-btn {
+            margin-top: 10px;
+            width: 100%;
+            padding: 10px;
+            background: #ffc107;
+            color: #000;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .permission-request-btn:hover {
+            background: #e0a800;
+        }
+        
+        .auto-mode-section {
+            margin-top: 15px;
+            margin-bottom: 15px;            
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        
+        .auto-mode-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .auto-mode-toggle input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .auto-mode-toggle label {
+            font-weight: 500;
+            color: #333;
+            cursor: pointer;
+            flex: 1;
+        }
+        
+        .auto-mode-description {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.4;
+        }
+        
+        .hidden-when-no-permission {
+            display: none;
+        }
+        
+        .hidden-when-no-permission.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>CoderPad Auto Copy</h1>
+        <p>Copia código y ejercicios automáticamente</p>
+        <div id="permissionStatus" class="permission-status"></div>
+    </div>
+    
+    <div id="autoModeSection" class="auto-mode-section hidden-when-no-permission">
+        <div class="auto-mode-toggle">
+            <input type="checkbox" id="autoModeCheckbox">
+            <label for="autoModeCheckbox">Habilitar Modo automático</label>
+        </div>
+        <div class="auto-mode-description">
+            La extensión copia automáticamente cada nuevo ejercicio que detecta en CoderPad.
+        </div>
+    </div>
+    
+    <button id="copyButton" class="copy-button hidden-when-no-permission">
+        📋 Copiar Contenido Actual
+    </button>
+    
+    <div id="status" class="status"></div>
+    
+    <script src="popup.js"></script>
+</body>
+</html>
