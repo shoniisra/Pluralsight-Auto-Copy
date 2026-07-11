@@ -2,12 +2,13 @@
   "manifest_version": 3,
   "name": "CoderPad Auto Copy",
   "description": "Copia automáticamente al portapapeles las preguntas y código de CoderPad.",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "permissions": [
     "activeTab",
     "tabs",
     "scripting",
-    "storage"
+    "storage",
+    "offscreen"
   ],
   "optional_permissions": [
     "clipboardWrite"
@@ -27,6 +28,13 @@
       "matches": ["https://screen-ide.coderpad.io/*"],
       "js": ["content.js"],
       "run_at": "document_idle",
+      "all_frames": false
+    },
+    {
+      "matches": ["https://screen-ide.coderpad.io/*"],
+      "js": ["main-world.js"],
+      "run_at": "document_start",
+      "world": "MAIN",
       "all_frames": false
     }
   ],

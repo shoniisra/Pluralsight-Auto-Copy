@@ -1,4 +1,4 @@
-// Content script for CoderPad Auto Copy v1.5.0
+// Content script for CoderPad Auto Copy v1.6.0
 // Adaptado para capturar contenido de screen-ide.coderpad.io
 
 (function() {
@@ -15,13 +15,13 @@
     delete window.coderpadAutoCopyActive;
     
     // Marcar como activo de manera única
-    if (window.coderpadAutoCopy_v100) {
-        console.log('✅ Content script v1.0.0 ya está cargado');
+    if (window.coderpadAutoCopy_v160) {
+        console.log('✅ Content script v1.6.0 ya está cargado');
         return;
     }
-    
-    window.coderpadAutoCopy_v100 = true;
-    console.log('🚀 CoderPad Auto Copy v1.0.0 iniciado');
+
+    window.coderpadAutoCopy_v160 = true;
+    console.log('🚀 CoderPad Auto Copy v1.6.0 iniciado');
     
     // Variables para el modo automático
     let autoModeEnabled = false;
@@ -37,87 +37,42 @@
         };
         
         // Intentar múltiples métodos de extracción comunes en editores web
-        
-        // Método 1A: Monaco Editor - Acceder al modelo de datos directamente (mejor método)
+
+        // Método 1A: Monaco Editor - puente con main-world.js (world: "MAIN")
+        // El content script vive en un mundo aislado y no ve window.monaco;
+        // main-world.js sí, y responde de forma síncrona vía un atributo del DOM.
         try {
-            // Intentar acceder a monaco desde window
-            const monacoGlobal = window.monaco || window.parent?.monaco;
-            
-            if (monacoGlobal && monacoGlobal.editor) {
-                const models = monacoGlobal.editor.getModels();
+            window.dispatchEvent(new CustomEvent('__coderpadMonacoRequest'));
+
+            const raw = document.documentElement.getAttribute('data-coderpad-monaco');
+            document.documentElement.removeAttribute('data-coderpad-monaco');
+
+            if (raw) {
+                const models = JSON.parse(raw);
                 console.log(`📝 Encontrados ${models.length} modelos de Monaco Editor`);
-                
-                models.forEach(model => {
-                    const uri = model.uri.toString();
-                    const fullCode = model.getValue(); // Obtiene TODO el contenido
-                    
-                    console.log(`📄 Modelo encontrado: ${uri} (${fullCode.length} chars)`);
-                    
-                    // Determinar si es código de respuesta o tests
-                    if (uri.includes('.test.')) {
-                        result.tests = fullCode;
-                        console.log(`✅ Tests extraídos completamente (${fullCode.length} chars)`);
-                    } else if (uri.includes('answer')) {
-                        result.answer = fullCode;
-                        console.log(`✅ Código de respuesta extraído completamente (${fullCode.length} chars)`);
+
+                models.forEach(data => {
+                    if (data.uri.includes('.test.')) {
+                        result.tests = data.content;
+                        console.log(`✅ Tests extraídos completamente (${data.content.length} chars)`);
+                    } else if (data.uri.includes('answer')) {
+                        result.answer = data.content;
+                        console.log(`✅ Código de respuesta extraído completamente (${data.content.length} chars)`);
                     } else if (!result.combined) {
-                        result.combined = fullCode;
-                        console.log(`✅ Código extraído completamente (${fullCode.length} chars)`);
+                        result.combined = data.content;
+                        console.log(`✅ Código extraído completamente (${data.content.length} chars)`);
                     }
                 });
-                
+
                 if (result.answer || result.tests || result.combined) {
                     return result;
                 }
             }
         } catch (error) {
-            console.log('⚠️ No se pudo acceder a monaco.editor.getModels():', error.message);
+            console.log('⚠️ No se pudo extraer Monaco vía puente main-world:', error.message);
         }
-        
-        // Método 1B: Intentar inyectar script para acceder al contexto de la página
-        try {
-            const scriptId = 'coderpad-monaco-extractor';
-            if (!document.getElementById(scriptId)) {
-                const script = document.createElement('script');
-                script.id = scriptId;
-                script.textContent = `
-                    (function() {
-                        if (typeof monaco !== 'undefined' && monaco.editor) {
-                            window.__monacoData = monaco.editor.getModels().map(m => ({
-                                uri: m.uri.toString(),
-                                content: m.getValue()
-                            }));
-                        }
-                    })();
-                `;
-                document.documentElement.appendChild(script);
-                script.remove();
-                
-                // Dar tiempo para que se ejecute
-                if (window.__monacoData) {
-                    console.log(`📝 Datos de Monaco extraídos vía script injection`);
-                    window.__monacoData.forEach(data => {
-                        if (data.uri.includes('.test.')) {
-                            result.tests = data.content;
-                            console.log(`✅ Tests extraídos completamente (${data.content.length} chars)`);
-                        } else if (data.uri.includes('answer')) {
-                            result.answer = data.content;
-                            console.log(`✅ Código extraído completamente (${data.content.length} chars)`);
-                        } else if (!result.combined) {
-                            result.combined = data.content;
-                        }
-                    });
-                    
-                    if (result.answer || result.tests || result.combined) {
-                        return result;
-                    }
-                }
-            }
-        } catch (error) {
-            console.log('⚠️ Script injection falló:', error.message);
-        }
-        
-        // Método 1C: Monaco Editor - Usar view-lines como fallback (puede estar incompleto)
+
+        // Método 1B: Monaco Editor - Usar view-lines como fallback (puede estar incompleto)
         const monacoEditors = document.querySelectorAll('.monaco-editor[role="code"]');
         if (monacoEditors.length > 0) {
             console.log(`🔍 Intentando extracción por view-lines (método fallback)`);
@@ -493,14 +448,18 @@
                         if (data) {
                             const formattedText = formatContent(data);
                             
-                            // Copiar automáticamente al portapapeles usando la API
-                            if (navigator.clipboard && navigator.clipboard.writeText) {
-                                navigator.clipboard.writeText(formattedText).then(() => {
+                            // Delegar la copia al background (offscreen document):
+                            // navigator.clipboard falla aquí si la pestaña no tiene foco
+                            chrome.runtime.sendMessage({
+                                action: 'copyToClipboard',
+                                text: formattedText
+                            }, (response) => {
+                                if (response && response.success) {
                                     console.log('✅ Contenido copiado automáticamente');
-                                }).catch((error) => {
-                                    console.log('⚠️ No se pudo copiar automáticamente, usar botón manual');
-                                });
-                            }
+                                } else {
+                                    console.log('⚠️ No se pudo copiar automáticamente:', response?.error);
+                                }
+                            });
                         }
                     }, 1000);
                 }
@@ -623,7 +582,8 @@
     console.log('👂 Listener configurado - esperando solicitudes del popup');
     
     // Inicializar estado del modo automático al cargar la página
-    chrome.storage.sync.get(['autoModeEnabled'], (result) => {
+    // (mismo storage que usa el popup: chrome.storage.local)
+    chrome.storage.local.get(['autoModeEnabled'], (result) => {
         if (result.autoModeEnabled) {
             console.log('🚀 Restaurando modo automático desde storage');
             setTimeout(() => {

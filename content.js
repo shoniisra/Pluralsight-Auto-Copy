@@ -1,4 +1,4 @@
-// Content script for Pluralsight Auto Copy v1.3.4
+// Content script for Pluralsight Auto Copy v1.4.0
 // SOLO funciona con clic manual - NO hay detección automática
 
 (function() {
@@ -15,13 +15,13 @@
     delete window.pluralsightAutoCopyActive;
     
     // Marcar como activo de manera única
-    if (window.pluralsightAutoCopy_v130) {
-        console.log('✅ Content script v1.3.4 ya está cargado');
+    if (window.pluralsightAutoCopy_v140) {
+        console.log('✅ Content script v1.4.0 ya está cargado');
         return;
     }
-    
-    window.pluralsightAutoCopy_v130 = true;
-    console.log('🚀 Pluralsight Auto Copy v1.3.4 iniciado');
+
+    window.pluralsightAutoCopy_v140 = true;
+    console.log('🚀 Pluralsight Auto Copy v1.4.0 iniciado');
     
     // Variables para el modo automático
     let autoModeEnabled = false;
@@ -221,14 +221,18 @@
                                 const formattedText = `Question:\n${data.question}\n\n Option Answers:\n${data.answers.map((answer, index) => `${index + 1}. ${answer}`).join('\n')} 
             \n\n Answer only correct option, dont give me explications`;
                                 
-                                // Copiar automáticamente al portapapeles usando la API
-                                if (navigator.clipboard && navigator.clipboard.writeText) {
-                                    navigator.clipboard.writeText(formattedText).then(() => {
+                                // Delegar la copia al background (offscreen document):
+                                // navigator.clipboard falla aquí si la pestaña no tiene foco
+                                chrome.runtime.sendMessage({
+                                    action: 'copyToClipboard',
+                                    text: formattedText
+                                }, (response) => {
+                                    if (response && response.success) {
                                         console.log('✅ Pregunta copiada automáticamente');
-                                    }).catch((error) => {
-                                        console.log('⚠️ No se pudo copiar automáticamente, usar botón manual');
-                                    });
-                                }
+                                    } else {
+                                        console.log('⚠️ No se pudo copiar automáticamente:', response?.error);
+                                    }
+                                });
                             }
                         }, 1000);
                     }
@@ -305,7 +309,8 @@
     console.log('👂 Listener configurado - esperando solicitudes del popup');
     
     // Inicializar estado del modo automático al cargar la página
-    chrome.storage.sync.get(['autoModeEnabled'], (result) => {
+    // (mismo storage que usa el popup: chrome.storage.local)
+    chrome.storage.local.get(['autoModeEnabled'], (result) => {
         if (result.autoModeEnabled) {
             console.log('🚀 Restaurando modo automático desde storage');
             setTimeout(() => {
